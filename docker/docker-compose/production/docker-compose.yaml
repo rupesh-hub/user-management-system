@@ -1,0 +1,65 @@
+services:
+
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: umsdb
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - ums-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    extends:
+      file: common-config.yaml
+      service: container-configuration
+
+  ums-backend:
+    container_name: ums-backend
+    image: rupesh1997/ums-backend:1.0.0
+    ports:
+      - "8181:8181"
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/umsdb
+      APPLICATION_URL: 192.168.1.70
+      APPLICATION_CORS_ENDPOINTS: http://192.168.1.70:4200
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8181/actuator/health/readiness" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    extends:
+      file: common-config.yaml
+      service: container-configuration
+
+  ums-frontend:
+    container_name: ums-frontend
+    image: rupesh1997/ums-frontend:1.0.0
+    depends_on:
+      ums-backend:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    extends:
+      file: common-config.yaml
+      service: network-configuration
+
+networks:
+  ums-network:
+    driver: bridge
+
+volumes:
+  mysql-data:

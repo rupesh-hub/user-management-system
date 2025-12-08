@@ -1,0 +1,36 @@
+services:
+  
+  ums-backend:
+    container_name: ums-backend
+    image: rupesh1997/ums-backend:1.0.0
+    ports:
+      - "8181:8181"
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:umsdb
+      APPLICATION_URL: localhost
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8181/actuator/health/readiness" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    extends:
+      file: common-config.yaml
+      service: container-configuration
+
+  ums-frontend:
+    container_name: ums-frontend
+    image: rupesh1997/ums-frontend:1.0.0
+    depends_on:
+      ums-backend:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    extends:
+      file: common-config.yaml
+      service: container-configuration
+
+networks:
+  ums-network:
+    driver: 'bridge'

@@ -1,0 +1,113 @@
+name: User Management System Frontend Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - frontend/**
+      - docker/frontend/Dockerfile
+      - .github/workflows/frontend-*.yaml
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  build:
+    name: Build frontend Docker image
+    runs-on: self-hosted
+    outputs:
+      VERSION: ${{ steps.extract_version.outputs.VERSION }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from package.json
+        id: extract_version
+        run: |
+          cd frontend
+          echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_SECRET_KEY }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          file: docker/frontend/Dockerfile
+          push: true
+          platforms: linux/amd64
+          pull: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ums-frontend:${{ steps.extract_version.outputs.VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/ums-frontend:latest
+          build-args: |
+            CONFIGURATION=production
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/ums-frontend:${{ steps.extract_version.outputs.VERSION }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+  update-deployments:
+    name: Update Docker Compose & Kubernetes with frontend image
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config user.name "rupesh1997"
+          git config user.email "dulalrupesh77@gmail.com"
+
+      - name: Pull latest changes
+        run: git pull --rebase origin main
+
+      - name: Update Docker Compose & Kubernetes
+        env:
+          IMAGE_TAG: ${{ needs.build.outputs.VERSION }}
+          IMAGE_NAME: ums-frontend
+        run: |
+          COMPOSE_FILE="docker/docker-compose/production/docker-compose.yaml"
+          K8S_FILE="kubernetes/frontend.yaml"
+
+          # Update Docker Compose frontend image using yq
+          NEW_IMAGE_COMPOSE="rupesh1997/ums-frontend:${IMAGE_TAG}"
+          echo "Updating Docker Compose frontend image to: ${NEW_IMAGE_COMPOSE}"
+          yq eval ".services.frontend.image = \"${NEW_IMAGE_COMPOSE}\"" -i "$COMPOSE_FILE"
+          grep -A 3 "frontend:" "$COMPOSE_FILE"
+
+          # Update Kubernetes deployment frontend image
+          NEW_IMAGE_K8S="${NEW_IMAGE_COMPOSE}"
+          echo "Updating Kubernetes deployment frontend image to: ${NEW_IMAGE_K8S}"
+          sed -i "s|\(image:\s*\).*|\1${NEW_IMAGE_K8S}|g" "$K8S_FILE"
+          grep -A 2 "image:" "$K8S_FILE"
+
+      - name: Commit and push changes safely
+        run: |
+          FILES="$COMPOSE_FILE $K8S_FILE"
+
+          # Only commit if there are changes
+          if git diff --exit-code -- $FILES; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git add $FILES
+          git commit -m "Update frontend image tag to ${IMAGE_TAG} [skip ci]"
+          git push origin main

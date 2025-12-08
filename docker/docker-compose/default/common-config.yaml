@@ -1,0 +1,15 @@
+services:
+  network-configuration:
+    networks:
+      - ums-network
+
+  container-configuration:
+    extends:
+      service: network-configuration
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"

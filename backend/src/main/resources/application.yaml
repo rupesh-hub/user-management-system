@@ -1,0 +1,141 @@
+server:
+  port: ${SERVER_PORT:8181}
+
+spring:
+  application:
+    name: ${APPLICATION_NAME:user-management-system}
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
+
+  config:
+    import:
+      - "optional:application-production.yaml"
+
+  datasource:
+    url: jdbc:h2:mem:umsdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Production overrides this to 'none'
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+  pattern:
+    console: ${LOG_PATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n}
+
+application:
+  url: ${APPLICATION_URL:localhost}
+  cors:
+    endpoints: >
+      ${APPLICATION_CORS_ENDPOINTS:
+      http://localhost:4200,
+      http://localhost:3000,
+      http://localhost:8080,
+      http://192.168.1.70:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+    info:
+      access: read_only
+
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true
+
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: "User Management System (UMS)"
+    description: >
+      A Spring Boot–based user management service supporting secure authentication,
+      registration, and role-based authorization using JWT. Provides stateless
+      security, encrypted password handling, refresh tokens, and RBAC policy management.
+    version: "1.0.0"
+    profile: "${SPRING_PROFILES_ACTIVE:production}"
+    environment: "${ENVIRONMENT:production}"
+    owner: "Rupesh Dulal"
+    website: "https://www.alfarays.tech"
+    license: "Proprietary — © ${YEAR:2025} Alfarays Technologies"
+
+  build:
+    timestamp: "@timestamp@"
+    java_version: "${java.version}"
+    spring_boot_version: "${spring.boot.version}"
+    build_tool: "Maven"
+    git_branch: "@git.branch@"
+    git_commit: "@git.commit.id@"
+    git_commit_time: "@git.commit.time@"
+
+  developer:
+    name: "Rupesh Dulal"
+    email: "rupeshdulal672@gmail.com"
+    github: "https://github.com/rupeshdulal"
+    linkedin: "https://www.linkedin.com/in/rupesh-dulal"
+
+  security:
+    jwt:
+      enabled: true
+      algorithm: "HS256"
+      token_type: "Bearer"
+      expiration_access_minutes: "${JWT_ACCESS_EXPIRATION:15}"
+      expiration_refresh_days: "${JWT_REFRESH_EXPIRATION:7}"
+    password_hashing: "BCrypt"
+    authentication: "Stateless JWT Authentication"
+    authorization: "Role-Based Access Control (RBAC)"
+    supported_roles:
+      - "ADMIN"
+      - "USER"
+      - "MANAGER"
+    features:
+      - "User Registration"
+      - "JWT Authentication"
+      - "Role-Based Authorization"
+      - "Password Encryption"
+      - "Refresh Token Support"
+      - "Email or Username Login"
+
+  infrastructure:
+    database: "H2 for development (MySQL in production)"
+    containerization: "Docker / Docker Compose"
+    dependent_services:
+      - "MySQL Database"
+    cloud_ready: true
+    deployment_platform: "${DEPLOY_PLATFORM:Docker}"
+
+  monitoring:
+    actuator_endpoints:
+      - "/actuator/health"
+      - "/actuator/info"
+      - "/actuator/metrics"
+      - "/actuator/prometheus"
+    metrics_stack: "Prometheus / Grafana"
+    logs: "ELK / Loki"
+    tracing: "OpenTelemetry / Jaeger"
