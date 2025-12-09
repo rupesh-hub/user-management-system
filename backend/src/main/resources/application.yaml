@@ -12,23 +12,52 @@ spring:
     import:
       - "optional:application-production.yaml"
 
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:admin}
+    password: ${MAIL_PASSWORD:admin}
+    properties:
+      mail:
+        smtp:
+          trust: "*"
+          auth: true
+          starttls:
+            enabled: true
+        connectiontimeout: 5000
+        timeout: 3000
+        writetimeout: 5000
+
   datasource:
-    url: jdbc:h2:mem:umsdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DATABASE_URL:jdbc:h2:mem:umsdb}
+    driver-class-name: ${DATABASE_DRIVER_CLASS:org.h2.Driver}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
   h2:
     console:
       enabled: true
 
   jpa:
     hibernate:
-      ddl-auto: update  # Production overrides this to 'none'
+      ddl-auto: update # Production overrides this to 'none'
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
     show-sql: false
+
+  mvc:
+    static-path-pattern: /uploads/**
+    servlet:
+      multipart:
+        enabled: true
+        file-size-threshold: 10MB
+        max-file-size: 10MB
+        max-request-size: 10MB
+
+    web:
+      resources:
+        static-locations: file:${UPLOAD_DIRECTORY:uploads}
 
 logging:
   level:
@@ -46,6 +75,17 @@ application:
       http://localhost:3000,
       http://localhost:8080,
       http://192.168.1.70:8081}
+  security:
+    token:
+      remember_me_secret_key: ${REMEMBER_ME_SECRET_KEY:TSHKAHSHSGSTBNSGJKSWUYGWBJBTUHHSGDSGVDVSGHXWYTFGYUHJHCVXSHCFYGSDBSBVCHGSFCYTWGJBCNBVS}
+      remember_me_token_validity: ${REMEMBER_ME_TOKEN_VALIDITY:86400}
+      secret_key: ${SECRET_KEY:TSHKAHSHSGSTBNSGJKSWUYGWBJBTUHHSGDSGVDVSGHXWYTFGYUHJHCVXSHCFYGSDBSBVCHGSFCYTWGJBCNBVS}
+      expiration: ${TOKEN_TIME_TO_LIVE:86400}
+
+  email:
+    account_activation_url: ${ACCOUNT_ACTIVATION_URL:http://localhost:4200/activate-account}
+    reset_password_url: ${RESET_PASSWORD_URL:http://localhost:4200/reset-password}
+    change_password_request_url: ${CHANGE_PASSWORD_REQUEST_URL:http://localhost:4200/change-password/%s}
 
 management:
   endpoints:
@@ -139,3 +179,7 @@ info:
     metrics_stack: "Prometheus / Grafana"
     logs: "ELK / Loki"
     tracing: "OpenTelemetry / Jaeger"
+
+file:
+  upload:
+    directory: uploads
