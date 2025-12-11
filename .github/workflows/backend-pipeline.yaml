@@ -43,6 +43,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     name: Build and push docker image
+    needs: [ build ]
 
     outputs:
       VERSION: ${{ steps.extract_version.outputs.VERSION }}

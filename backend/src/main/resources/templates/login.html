@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Security Demo</title>
+
+    <style>
+        /* ------------------------------
+            GLOBAL STYLES
+        ------------------------------ */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #3b82f6, #9333ea);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ------------------------------
+            LOGIN WRAPPER
+        ------------------------------ */
+        .login-container {
+            width: 380px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 35px 40px;
+            box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* Fade animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 28px;
+            color: #333;
+        }
+
+        /* ------------------------------
+            FORM INPUTS
+        ------------------------------ */
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-size: 15px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #bbb;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #6366f1;
+            outline: none;
+        }
+
+        /* ------------------------------
+            REMEMBER ME
+        ------------------------------ */
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .remember-me input {
+            margin-right: 8px;
+        }
+
+        /* ------------------------------
+            LOGIN BUTTON
+        ------------------------------ */
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: #6366f1;
+            color: #fff;
+            font-size: 17px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #4f46e5;
+        }
+
+        /* ------------------------------
+            ERROR MESSAGE
+        ------------------------------ */
+        .error {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* ------------------------------
+            FOOTER LINKS
+        ------------------------------ */
+        .link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 15px;
+        }
+
+        .link a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+
+        .link a:hover {
+            text-decoration: underline;
+        }
+
+        /* ------------------------------
+            RESPONSIVE
+        ------------------------------ */
+        @media (max-width: 450px) {
+            .login-container {
+                width: 90%;
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+
+    <h2>Login</h2>
+
+    <!-- Spring Security error if login failed -->
+    <div th:if="${param.error}" class="error">
+        Invalid username or password.
+    </div>
+
+    <form method="post" action="/login">
+
+        <!-- Username -->
+        <div class="input-group">
+            <label>Username</label>
+            <input type="text" name="username" required placeholder="Enter your username">
+        </div>
+
+        <!-- Password -->
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" name="password" required placeholder="Enter your password">
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="remember-me">
+            <input type="checkbox" name="remember-me" id="rememberMe">
+            <label for="rememberMe">Remember me</label>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-login" type="submit">Login</button>
+    </form>
+
+    <div class="link">
+        <a href="#">Forgot Password?</a>
+    </div>
+</div>
+
+</body>
+</html>

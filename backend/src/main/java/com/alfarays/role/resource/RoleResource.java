@@ -21,7 +21,7 @@ public class RoleResource {
 
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public ResponseEntity<GlobalResponse<RoleResponse>> save(@RequestBody @Valid RoleRequest request) {
+    public ResponseEntity<GlobalResponse<RoleResponse>> create(@RequestBody @Valid RoleRequest request) {
         return ResponseEntity.ok(roleService.create(request));
     }
 

@@ -10,9 +10,10 @@ on:
   workflow_dispatch: # Manual trigger
 
 jobs:
+  
   build:
     name: Build frontend Docker image
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.extract_version.outputs.VERSION }}
 

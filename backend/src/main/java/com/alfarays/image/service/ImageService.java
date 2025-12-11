@@ -111,7 +111,6 @@ public class ImageService {
         String fileName = filePath.getFileName().toString();
 
         return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/")
                 .path(dateSubdirectory + "/")
                 .path(fileName)
                 .toUriString();
