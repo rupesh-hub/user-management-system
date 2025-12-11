@@ -1,5 +1,7 @@
 package com.alfarays.authentication.service;
 
+import com.alfarays.authentication.model.AuthenticationRequest;
+import com.alfarays.authentication.model.AuthenticationResponse;
 import com.alfarays.authentication.model.ForgetPasswordRequest;
 import com.alfarays.authentication.model.RegistrationRequest;
 import com.alfarays.exception.AuthorizationException;
@@ -20,6 +22,10 @@ import com.alfarays.util.GlobalResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -31,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.alfarays.mail.enums.MailSubject.ACCOUNT_ACTIVATION_REQUEST;
 import static com.alfarays.mail.enums.MailTemplate.FORGOT_PASSWORD_REQUEST;
@@ -89,8 +96,12 @@ public class AuthenticationService implements IAuthenticationService {
                 .orElseThrow(() -> new RuntimeException("Role 'user' does not exist."));
         user.setRoles(List.of(role));
         user = userRepository.save(user);
-        Image profile = imageService.upload(image, user);
-        user.setProfile(profile);
+
+        if(null != image) {
+            Image profile = imageService.upload(image, user);
+            user.setProfile(profile);
+        }
+
         String token = confirmationTokenService.create(user.getUsername(), ACCOUNT_ACTIVATED, TOKEN_DURATION, DURATION_UNIT);
         sendMail(user, token, ACCOUNT_ACTIVATION_REQUEST.content(), MailTemplate.ACCOUNT_ACTIVATION, activationUrl);
 

@@ -30,9 +30,5 @@ public class ApplicationConfiguration {
         return mailSender;
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
 
 }

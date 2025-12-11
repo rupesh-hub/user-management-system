@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class RoleService implements IRoleService {
 
 
-    private final RoleRepository repository;
+    private final RoleRepository roleRepository;
 
     @Override
     public GlobalResponse<RoleResponse> create(RoleRequest request) {
@@ -32,6 +32,8 @@ public class RoleService implements IRoleService {
         role.setDescription(request.description());
         role.setSystemRole(request.isSystemRole());
 
+        role = roleRepository.save(role);
+
         return GlobalResponse.success(
                 new RoleResponse(
                         role.getId(),
@@ -39,15 +41,15 @@ public class RoleService implements IRoleService {
                         role.getDescription(),
                         0,
                         role.isSystemRole(),
-                        role.getCreatedOn().toString(),
-                        role.getModifiedOn().toString()
+                        role.getCreatedOn(),
+                        role.getModifiedOn()
                 )
         );
     }
 
     @Override
     public GlobalResponse<List<RoleResponse>> getAll(int page, int size) {
-        Page<Role> rolePage = repository.findAll(PageRequest.of(page, size));
+        Page<Role> rolePage = roleRepository.findAll(PageRequest.of(page, size));
 
         return GlobalResponse.success(
                 rolePage.getContent()
@@ -58,8 +60,8 @@ public class RoleService implements IRoleService {
                                         role.getDescription(),
                                         3,
                                         role.isSystemRole(),
-                                        role.getCreatedOn().toString(),
-                                        role.getModifiedOn().toString()
+                                        role.getCreatedOn(),
+                                        role.getModifiedOn()
                                 )
                         ).collect(Collectors.toList())
                 ,
@@ -76,7 +78,7 @@ public class RoleService implements IRoleService {
 
     @Override
     public GlobalResponse<RoleResponse> getByName(String name) {
-        var role = repository
+        var role = roleRepository
                 .findByRole(name)
                 .orElseThrow(() -> new AuthorizationException("Role by " + name + " not found."));
 
@@ -87,15 +89,15 @@ public class RoleService implements IRoleService {
                         role.getDescription(),
                         null != role.getUsers() ? role.getUsers().size() : 0,
                         role.isSystemRole(),
-                        role.getCreatedOn().toString(),
-                        role.getModifiedOn().toString()
+                        role.getCreatedOn(),
+                        role.getModifiedOn()
                 )
         );
     }
 
     @Override
     public GlobalResponse<RoleResponse> update(Long id, RoleRequest request) {
-        var role = repository.findById(id)
+        var role = roleRepository.findById(id)
                 .orElseThrow(() -> new AuthorizationException("Role by " + id + " not found."));
 
         if(Objects.nonNull(request.role()) && !request.role().isEmpty()) role.setRole(request.role());
@@ -104,7 +106,7 @@ public class RoleService implements IRoleService {
 
         role.setSystemRole(request.isSystemRole());
         role.setModifiedOn(LocalDateTime.now());
-        repository.save(role);
+        roleRepository.save(role);
         return GlobalResponse.success(
                 new RoleResponse(
                         role.getId(),
@@ -112,17 +114,17 @@ public class RoleService implements IRoleService {
                         role.getDescription(),
                         role.getUsers().size(),
                         role.isSystemRole(),
-                        role.getCreatedOn().toString(),
-                        role.getModifiedOn().toString()
+                        role.getCreatedOn(),
+                        role.getModifiedOn()
                 )
         );
     }
 
     @Override
     public GlobalResponse<Void> delete(long id) {
-        var role = repository.findById(id)
+        var role = roleRepository.findById(id)
                 .orElseThrow(() -> new AuthorizationException("Role by " + id + " not found."));
-        repository.delete(role);
+        roleRepository.delete(role);
         return GlobalResponse.success();
     }
 

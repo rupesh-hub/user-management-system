@@ -1,5 +1,7 @@
 package com.alfarays.authentication.service;
 
+import com.alfarays.authentication.model.AuthenticationRequest;
+import com.alfarays.authentication.model.AuthenticationResponse;
 import com.alfarays.authentication.model.ForgetPasswordRequest;
 import com.alfarays.authentication.model.RegistrationRequest;
 import com.alfarays.token.enums.TokenType;

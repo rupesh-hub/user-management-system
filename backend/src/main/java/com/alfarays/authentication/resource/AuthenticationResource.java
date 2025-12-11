@@ -1,19 +1,30 @@
 package com.alfarays.authentication.resource;
 
+import com.alfarays.authentication.model.AuthenticationRequest;
+import com.alfarays.authentication.model.AuthenticationResponse;
 import com.alfarays.authentication.model.ForgetPasswordRequest;
 import com.alfarays.authentication.model.RegistrationRequest;
 import com.alfarays.authentication.service.IAuthenticationService;
 import com.alfarays.token.enums.TokenType;
 import com.alfarays.util.GlobalResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/authentication")
@@ -21,17 +32,45 @@ import java.util.Objects;
 public class AuthenticationResource {
 
     private final IAuthenticationService authenticationService;
+    private final AuthenticationManager authenticationManager;
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<GlobalResponse<Void>> register(@Valid RegistrationRequest request,
-                                                         @RequestParam(required = false, name = "profile") MultipartFile profile)
-            throws MethodArgumentNotValidException {
+    public ResponseEntity<GlobalResponse<Void>> register(
+            @Valid @ModelAttribute RegistrationRequest request,
+            @RequestPart(value = "profile", required = false) MultipartFile profile
+    ) throws MethodArgumentNotValidException {
         return ResponseEntity.ok(authenticationService.register(request, profile));
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody AuthenticationRequest request, HttpServletRequest httpRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.username(), request.password())
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // store SecurityContext in HttpSession
+        httpRequest.getSession(true)
+                .setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                        SecurityContextHolder.getContext());
+
+        return ResponseEntity.ok(
+                AuthenticationResponse
+                        .builder()
+                        .username(authentication.getName())
+                        .roles(
+                                authentication.getAuthorities()
+                                        .stream()
+                                        .map(GrantedAuthority::getAuthority)
+                                        .collect(Collectors.toSet())
+                        )
+                        .build()
+        );
+    }
+
     //TODO:
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<GlobalResponse<Void>> logout() {
         return ResponseEntity.ok(null);
